@@ -9,6 +9,10 @@ function decrypt_key() {
     local file=$1
     local dest="$2/$file"
 
+    if [ -f $dest ]; then
+        exit 0
+    fi
+
     gpg -o $dest -d $file
 }
 
