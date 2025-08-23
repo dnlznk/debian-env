@@ -23,6 +23,7 @@ packages=(
     unzip
     curl
     gpg
+    keychain
     mokutil
     pass
     ufw
