@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+sudo apt update && sudo apt upgrade -y
+
+github_dir="$HOME/github"
+if [[ ! -d "$github_dir" ]]; then
+    mkdir -p "$github_dir"
+fi
+
+packages=(
+    tmux
+    stow
+    tldr
+    gcc
+    valgrind
+    build-essential
+    gawk
+    fd-find
+    ripgrep
+    ninja-build
+    gettext
+    cmake
+    unzip
+    curl
+    gpg
+    mokutil
+    pass
+    ufw
+    dkms
+    fswatch
+    ntfs-3g
+    fuse3
+    fwupd
+    luarocks
+    ffmpeg
+    vlc
+    mpv
+    bc
+    genisoimage
+    network-manager
+    xdotool
+    libsecret-1-dev
+    jq
+    libcunit1-dev
+    sqlite3
+    libsqlite3-dev
+    libimlib2-dev
+    libxcb-util-dev
+    acpid
+    lm-sensors
+    iw
+)
+
+sudo apt install -y "${packages[@]}"
+
+# Activate firewall
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw enable
