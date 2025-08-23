@@ -7,10 +7,10 @@ if [[ ! -d "$github_dir" ]]; then
     mkdir -p "$github_dir"
 fi
 
+# TODO add tldr client in rust install
 packages=(
     tmux
     stow
-    tldr
     gcc
     valgrind
     build-essential
