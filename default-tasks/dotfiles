@@ -22,9 +22,12 @@ secrets_dir="$HOME/github/secret-sauce"
 if [ ! -d $secrets_dir ]; then
     git clone "https://oauth2:$gh_pat@github.com/dnlznk/secret-sauce" $secrets_dir
     set_github_url "git@github.com:dnlznk/secret-sauce"
+    cd $secrets_dir
+else
+    cd $secrets_dir
+    git pull
 fi
 
-cd $secrets_dir
 
 ssh_dir="$HOME/.ssh"
 decrypt_key "config" "$ssh_dir"
