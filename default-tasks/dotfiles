@@ -12,26 +12,6 @@ function decrypt_key() {
     gpg -o $dest -d $file
 }
 
-dotfiles_dir="$HOME/.dotfiles"
-if [[ -d "$dotfiles_dir" ]]; then
-    exit 0
-fi
-
-git clone https://github.com/dnlznk/dotfiles $dotfiles_dir
-cd $dotfiles_dir
-set_github_url "git@github.com:dnlznk/dotfiles"
-
-fdfind -H ".bash|.profile" -x rm
-
-./linux
-
-sudo mkdir -p /usr/share/backgrounds
-sudo cp wallpaper/tropical-beach.png /usr/share/backgrounds/tropical-beach.png
-
-source "$HOME/.bashrc"
-
-cd -
-
 gh_pat=$(gpg -d $(pwd)/vars/gh-pat 2> /dev/null)
 
 secrets_dir="$GITHUB_DIR/secret-sauce"
@@ -54,6 +34,26 @@ gpg --import "$HOME/public.gpg"
 echo "dnlznk:5" > gpg --import-ownertrust
 
 rm -f "$HOME/private.gpg" "$HOME/public.gpg"
+
+cd -
+
+dotfiles_dir="$HOME/.dotfiles"
+if [[ -d "$dotfiles_dir" ]]; then
+    exit 0
+fi
+
+git clone https://github.com/dnlznk/dotfiles $dotfiles_dir
+cd $dotfiles_dir
+set_github_url "git@github.com:dnlznk/dotfiles"
+
+fdfind -H ".bash|.profile" -x rm
+
+./linux
+
+sudo mkdir -p /usr/share/backgrounds
+sudo cp wallpaper/tropical-beach.png /usr/share/backgrounds/tropical-beach.png
+
+source "$HOME/.bashrc"
 
 cd -
 
