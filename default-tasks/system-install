@@ -24,6 +24,7 @@ packages=(
     curl
     gpg
     keychain
+    openssh-client
     mokutil
     pass
     ufw
@@ -58,3 +59,9 @@ sudo apt install -y "${packages[@]}"
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw enable
+
+# Activate ssh agent
+systemctl --user enable ssh-agent.socket
+systemctl --user start ssh-agent.socket
+
+sudo loginctl enable-linger $USER

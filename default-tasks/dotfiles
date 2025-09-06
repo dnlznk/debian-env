@@ -10,7 +10,7 @@ function decrypt_key() {
     local dest="$2/$file"
 
     if [ -f $dest ]; then
-        exit 0
+        return
     fi
 
     gpg -o $dest -d $file
@@ -48,20 +48,19 @@ rm -f "$HOME/private.gpg" "$HOME/public.gpg"
 cd -
 
 dotfiles_dir="$HOME/.dotfiles"
-if [[ -d "$dotfiles_dir" ]]; then
-    exit 0
+if [[ ! -d "$dotfiles_dir" ]]; then
+    git clone git@github.com:dnlznk/.dotfiles $dotfiles_dir
+    fdfind -H ".bash|.profile" -x rm
 fi
 
-git clone https://github.com/dnlznk/dotfiles $dotfiles_dir
 cd $dotfiles_dir
-set_github_url "git@github.com:dnlznk/dotfiles"
-
-fdfind -H ".bash|.profile" -x rm
 
 ./linux
 
-sudo mkdir -p /usr/share/backgrounds
-sudo cp wallpaper/tropical-beach.png /usr/share/backgrounds/tropical-beach.png
+if [ ! -f "/usr/share/backgrounds/tropical-beach.png" ]; then
+    sudo mkdir -p /usr/share/backgrounds
+    sudo cp wallpaper/tropical-beach.png /usr/share/backgrounds/tropical-beach.png
+fi
 
 source "$HOME/.bashrc"
 
