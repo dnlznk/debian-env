@@ -1,70 +1,108 @@
 #!/usr/bin/env bash
 
+function echo_stderr() {
+    echo $1 >&2
+}
+
 function set_github_url() {
     local url=$1
     git remote set-url origin $url
 }
 
+function enter_password() {
+    local prompt="Enter password for $1"
+    local file="$2"
+    local password=""
+
+    echo_stderr "$prompt"
+
+    while [ -z $password ];
+    do
+        read -s password
+        gpg --batch --yes --passphrase $password -d $file 2>1 > /dev/null
+        if [ $? -gt 0 ]; then
+            echo_stderr "Wrong password! Retry"
+            password=""
+        fi
+    done
+
+    echo $password
+}
+
 function decrypt_key() {
     local file=$1
     local dest="$2/$file"
+    local password="$3"
 
-    if [ -f $dest ]; then
-        return
+    if [ $2 == "-" ]; then
+        dest="$2"
     fi
 
-    gpg -o $dest -d $file
+    gpg --batch --yes --passphrase $password -o $dest -d $file 2>1 > /dev/null
 }
 
-gh_pat=$(gpg -d $(pwd)/vars/gh-pat 2> /dev/null)
+function process_secret_sauce() {
+    local file="vars/gh-pat"
+    local secrets_dir="$HOME/github/secret-sauce"
+    local password=$(enter_password "github pat" $file)
+    local gh_pat=$(decrypt_key $file "-" $password)
 
-secrets_dir="$HOME/github/secret-sauce"
-if [ ! -d $secrets_dir ]; then
-    git clone "https://oauth2:$gh_pat@github.com/dnlznk/secret-sauce" $secrets_dir
-    set_github_url "git@github.com:dnlznk/secret-sauce"
-    cd $secrets_dir
-else
-    cd $secrets_dir
-    git pull
-fi
+    if [ ! -d $secrets_dir ]; then
+        git clone "https://oauth2:$gh_pat@github.com/dnlznk/secret-sauce" $secrets_dir
+        set_github_url "git@github.com:dnlznk/secret-sauce"
+        cd $secrets_dir
+    else
+        cd $secrets_dir
+        git pull origin main
+    fi
 
+    local ssh_dir="$HOME/.ssh"
+    decrypt_key "config" "$ssh_dir"
+    decrypt_key "github" "$ssh_dir"
+    decrypt_key "github.pub" "$ssh_dir"
+    decrypt_key "og-gitlab" "$ssh_dir"
+    decrypt_key "og-gitlab.pub" "$ssh_dir"
+    decrypt_key "private.gpg" "$HOME"
+    decrypt_key "public.gpg" "$HOME"
 
-ssh_dir="$HOME/.ssh"
-decrypt_key "config" "$ssh_dir"
-decrypt_key "github" "$ssh_dir"
-decrypt_key "github.pub" "$ssh_dir"
-decrypt_key "og-gitlab" "$ssh_dir"
-decrypt_key "og-gitlab.pub" "$ssh_dir"
-decrypt_key "private.gpg" "$HOME"
-decrypt_key "public.gpg" "$HOME"
+    gpg --import "$HOME/private.gpg"
+    gpg --import "$HOME/public.gpg"
 
-gpg --import "$HOME/private.gpg"
-gpg --import "$HOME/public.gpg"
+    echo "dnlznk:5" > gpg --import-ownertrust
 
-echo "dnlznk:5" > gpg --import-ownertrust
+    rm -f "$HOME/private.gpg" "$HOME/public.gpg"
 
-rm -f "$HOME/private.gpg" "$HOME/public.gpg"
+    cd -
+    unset password
+}
 
-cd -
+function clone_dotfiles() {
+    dotfiles_dir="$HOME/.dotfiles"
+    if [[ ! -d "$dotfiles_dir" ]]; then
+        git clone git@github.com:dnlznk/.dotfiles $dotfiles_dir
+        fdfind -H ".bash|.profile" -x rm
+    fi
 
-dotfiles_dir="$HOME/.dotfiles"
-if [[ ! -d "$dotfiles_dir" ]]; then
-    git clone git@github.com:dnlznk/.dotfiles $dotfiles_dir
-    fdfind -H ".bash|.profile" -x rm
-fi
+    cd $dotfiles_dir
 
-cd $dotfiles_dir
+    ./linux
 
-./linux
+    if [ ! -f "/usr/share/backgrounds/tropical-beach.png" ]; then
+        sudo mkdir -p /usr/share/backgrounds
+        sudo cp wallpaper/tropical-beach.png /usr/share/backgrounds/tropical-beach.png
+    fi
 
-if [ ! -f "/usr/share/backgrounds/tropical-beach.png" ]; then
-    sudo mkdir -p /usr/share/backgrounds
-    sudo cp wallpaper/tropical-beach.png /usr/share/backgrounds/tropical-beach.png
-fi
+    source "$HOME/.bashrc"
 
-source "$HOME/.bashrc"
+    cd -
+}
 
-cd -
+function main() {
+    process_secret_sauce
+    clone_dotfiles 
 
-git clone git@github.com:dnlznk/pass-store $PASSWORD_STORE_DIR
-git clone git@github.com:dnlznk/notes $NOTES_DIR
+    git clone git@github.com:dnlznk/pass-store $PASSWORD_STORE_DIR
+    git clone git@github.com:dnlznk/notes $NOTES_DIR
+}
+
+main
